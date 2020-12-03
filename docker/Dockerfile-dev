@@ -1,0 +1,11 @@
+FROM rh-registry.gazprom-neft.local:5000/ubi7/python-36
+
+WORKDIR /dssh
+COPY --chown=2001:0 src/ src/
+RUN pip install --index=http://nexus.gazprom-neft.local:8080/repository/pypi-pypi-external-dso/simple \
+                --trusted-host nexus.gazprom-neft.local \
+                -r ./src/seismiqb/seismiqb/batchflow/requirements.txt \
+                -r ./src/seismiqb/requirements.txt
+
+USER 2001
+CMD ["python", "-u", "/app/main.py"]
