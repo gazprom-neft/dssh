@@ -1,0 +1,3 @@
+import seismiqb
+
+print("Success")

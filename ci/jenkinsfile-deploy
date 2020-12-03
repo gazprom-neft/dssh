@@ -1,0 +1,110 @@
+#!groovy
+
+// populate variables from folder
+withFolderProperties{
+    DEPLOY_ENVIRONMENT = "${env.DEPLOY_ENVIRONMENT}"
+    OCP_URL_TARGET = "${env.OCP_URL_TARGET}"
+    OCP_CRED_ID = "${env.OCP_CRED_ID}"
+    OCP_NAMESPACE = "${env.OCP_NAMESPACE}"
+    REGISTRY_TRUST = "${env.REGISTRY_TRUST}"
+    REGISTRY_TRUST_CRED_ID = "${env.REGISTRY_TRUST_CRED_ID}"
+    REGISTRY_DEV = "${env.REGISTRY_DEV}"
+    REGISTRY_DEV_CRED_ID = "${env.REGISTRY_DEV_CRED_ID}"
+    MIRROR_REGISTRY_DEV = "${env.MIRROR_REGISTRY_DEV}"
+    MIRROR_REGISTRY_DEV_CRED_ID = "${env.MIRROR_REGISTRY_DEV_CRED_ID}"
+}
+
+if (DEPLOY_ENVIRONMENT == 'trust') {
+    REGISTRY = REGISTRY_TRUST
+    REGISTRY_CRED_ID = REGISTRY_TRUST_CRED_ID
+}
+
+if (DEPLOY_ENVIRONMENT == 'dev') {
+    REGISTRY = REGISTRY_DEV
+    REGISTRY_CRED_ID = REGISTRY_DEV_CRED_ID
+}
+
+if ("${params.DEPLOY_ENVIRONMENT}" == 'trust_to_dev') {
+    REGISTRY = MIRROR_REGISTRY_DEV
+    REGISTRY_CRED_ID = MIRROR_REGISTRY_DEV_CRED_ID
+}
+
+pipeline {
+    agent {
+        label "${DEPLOY_ENVIRONMENT}"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+    }
+
+    environment {
+        GIT_COMMIT_SHORT = sh(
+            script: "printf \$(git rev-parse --short ${GIT_COMMIT})",
+            returnStdout: true
+        )
+    }
+
+    stages {
+        stage("Set build name") {
+            steps {
+                // use name of the patchset as the build name
+                wrap([$class: 'BuildUser']){
+                    script {
+                        if ("${params.BRANCH}" == 'null'){
+                            buildName "$BUILD_NUMBER-$GIT_COMMIT_SHORT"
+                            }
+                        else {
+                            buildName "$BUILD_NUMBER-$DEPLOY_ENVIRONMENT-${params.BRANCH}-$GIT_COMMIT_SHORT"
+                            }
+                            }
+                //buildName "$BUILD_NUMBER-$GIT_COMMIT_SHORT"
+                    buildDescription "Executed @ ${NODE_NAME}. Build started by ${BUILD_USER}"
+                }
+            }
+        }
+
+        stage("OCP login") {
+            steps {
+                echo "=====ocp login====="
+                withCredentials([string(credentialsId: "$OCP_CRED_ID", variable: 'TOKEN')]) {
+                    sh """
+                    oc login $OCP_URL_TARGET --token $TOKEN
+                    """
+                }
+            }
+        }
+
+        stage("OCP deploy") {
+            steps {
+                echo "=====ocp tag new image as latest====="
+                    sh """
+                    oc tag $REGISTRY/$OCP_NAMESPACE/$OCP_APP_NAME:$GIT_COMMIT_SHORT $OCP_APP_NAME:latest
+                    """
+            }
+        }
+
+        stage("OCP check imagestream & deploy status") {
+            when {
+                not {
+                    expression {
+                        def status = sh(script: "oc describe is/$OCP_APP_NAME | grep NotFound", returnStatus: true)
+                        if (status != 0) {
+                            return false;
+                        }
+                        else {
+                            currentBuild.result = "FAILURE"
+                            throw new Exception("Throw to stop pipeline")
+                        }
+                    }
+                }  
+            }
+            steps {
+                echo "====ocp get status for $OCP_APP_NAME===="
+                sh """
+                oc rollout status dc/$OCP_APP_NAME | grep "successfully rolled out"
+                """
+            }
+        }
+    }
+}
