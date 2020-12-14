@@ -1,3 +1,0 @@
-[submodule "src/seismiqb"]
-	path = src/seismiqb
-	url = https://github.com/gazprom-neft/seismiqb.git
