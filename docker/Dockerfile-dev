@@ -1,11 +1,16 @@
 FROM rh-registry.gazprom-neft.local:5000/ubi7/python-38
 
+RUN echo "Pulled base image"
+
 WORKDIR /dssh
 COPY --chown=2001:0 src/ src/
 RUN pip install --index=http://nexus.gazprom-neft.local:8080/repository/pypi-pypi-external-dso/simple \
                 --trusted-host nexus.gazprom-neft.local \
-                -r ./src/seismiqb/seismiqb/batchflow/requirements.txt \
-                -r ./src/seismiqb/requirements.txt
+                numpy
+#                -r ./src/seismiqb/seismiqb/batchflow/requirements.txt \
+#                -r ./src/seismiqb/requirements.txt
+
+RUN echo "Installed numpy"
 
 USER 2001
 CMD ["python", "-u", "/app/main.py"]
