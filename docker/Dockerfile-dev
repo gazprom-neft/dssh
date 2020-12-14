@@ -1,4 +1,4 @@
-FROM rh-registry.gazprom-neft.local:5000/ubi7/python-38
+FROM rh-registry.dso.techpark.local/ubi7/python-38
 
 RUN echo "Pulled base image"
 
