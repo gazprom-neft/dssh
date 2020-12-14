@@ -1,4 +1,4 @@
-FROM rh-registry.gazprom-neft.local:5000/ubi7/python-36
+FROM rh-registry.gazprom-neft.local:5000/ubi7/python-38
 
 WORKDIR /dssh
 COPY --chown=2001:0 src/ src/
