@@ -1,3 +1,1 @@
-import seismiqb
-
-print("Success")
+print("Hello World")
