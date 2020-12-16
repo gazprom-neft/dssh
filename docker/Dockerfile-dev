@@ -1,16 +1,17 @@
 FROM rh-registry.dso.techpark.local/ubi7/python-38
 
-RUN echo "Pulled base image"
-
+# copy src dir inside dssh dir of a container
 WORKDIR /dssh
-COPY --chown=2001:0 src/ src/
+COPY --chown=2001:0 src/ .
+
+# install all python requirements
+WORKDIR ./seismiqb
 RUN pip install --index=http://nexus.gazprom-neft.local:8080/repository/pypi-pypi-external-dso/simple \
                 --trusted-host nexus.gazprom-neft.local \
-                numpy
-#                -r ./src/seismiqb/seismiqb/batchflow/requirements.txt \
-#                -r ./src/seismiqb/requirements.txt
+                -r requirements.txt
 
-RUN echo "Installed numpy"
-
+# run main.py
+WORKDIR ..
 USER 2001
-CMD ["python", "-u", "/app/main.py"]
+CMD ["python", "-u", "main.py"]
+
