@@ -1,4 +1,1 @@
-import seismiqb as sq
-
-print(sq.__version__)
-
+print("Hello world!")
