@@ -1,0 +1,9 @@
+FROM nvidia-registry.dso.techpark.local/nvidia/pytorch:20.09-py3
+
+# copy src dir inside dssh dir of a container
+WORKDIR /dssh
+COPY --chown=2001:0 src/ .
+
+# run main.py
+USER 2001
+CMD ["python", "-u", "main.py"]
