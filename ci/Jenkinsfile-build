@@ -3,19 +3,23 @@
 // populate variables from folder
 withFolderProperties{
     REGISTRY_TRUST = "${env.REGISTRY_TRUST}"
+    NVIDIA_REGISTRY_TRUST = "${env.NVIDIA_REGISTRY_TRUST}"
     REGISTRY_TRUST_CRED_ID = "${env.REGISTRY_TRUST_CRED_ID}"
     REGISTRY_DEV = "${env.REGISTRY_DEV}"
+    NVIDIA_REGISTRY_DEV = "${env.NVIDIA_REGISTRY_DEV}"
     REGISTRY_DEV_CRED_ID = "${env.REGISTRY_DEV_CRED_ID}"
     OCP_NAMESPACE = "${env.OCP_NAMESPACE}"
 }
 
 if (BUILD_ENVIRONMENT == 'trust') {
     REGISTRY = REGISTRY_TRUST
+    NVIDIA_REGISTRY = NVIDIA_REGISTRY_TRUST
     REGISTRY_CRED_ID = REGISTRY_TRUST_CRED_ID
 }
 
 if (BUILD_ENVIRONMENT == 'dev') {
     REGISTRY = REGISTRY_DEV
+    NVIDIA_REGISTRY = NVIDIA_REGISTRY_DEV
     REGISTRY_CRED_ID = REGISTRY_DEV_CRED_ID
 }
 
@@ -54,12 +58,32 @@ pipeline {
             }
         }
 
-        stage("Docker registry login") {
+        stage("Git submodule recursive clone") {
             steps {
-                echo "=====docker login registry====="
+                echo "=====clone submodules====="
+                sshagent(['d35cc8ea-04ce-4c30-97e3-e201ee123634']) {
+                    sh "git submodule update --init --recursive --remote"
+                    sh "git submodule update --recursive"
+                    
+                    // check and debug
+                    sh "git log -n 1"
+                    dir('src/seismiqb/'){
+                        sh "git log -n 1"
+                    }
+                    dir('src/seismiqb/seismiqb/batchflow/'){
+                        sh "git log -n 1"
+                    }
+                    
+                }
+            }
+        }
+
+        stage("Docker nvidia registry login") {
+            steps {
+                echo "=====docker login nvidia registry====="
                 withCredentials([usernamePassword(credentialsId: "$REGISTRY_CRED_ID", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh """
-                    docker login $REGISTRY -u $USERNAME -p $PASSWORD
+                    docker login $NVIDIA_REGISTRY -u $USERNAME -p $PASSWORD
                     """
                 }
             }
@@ -71,6 +95,17 @@ pipeline {
                 sh """
                 docker build -t $REGISTRY/$OCP_NAMESPACE/$OCP_APP_NAME:$GIT_COMMIT_SHORT -f $DOCKERFILE_NAME .
                 """
+            }
+        }
+
+        stage("Docker registry login") {
+            steps {
+                echo "=====docker login registry====="
+                withCredentials([usernamePassword(credentialsId: "$REGISTRY_CRED_ID", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh """
+                    docker login $REGISTRY -u $USERNAME -p $PASSWORD
+                    """
+                }
             }
         }
 

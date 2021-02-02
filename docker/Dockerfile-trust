@@ -1,4 +1,4 @@
-FROM nvidia-registry.dso.techpark.local/nvidia/pytorch:20.09-py3
+FROM nvidia-registry.gazprom-neft.local:5000/nvidia/pytorch:20.09-py3
 
 # copy src dir inside dssh dir of a container
 WORKDIR /dssh
