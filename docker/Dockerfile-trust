@@ -4,6 +4,13 @@ FROM nvidia-registry.gazprom-neft.local:5000/nvidia/pytorch:20.09-py3
 WORKDIR /dssh
 COPY --chown=2001:0 src/ .
 
+# install all python requirements
+WORKDIR ./seismiqb
+RUN pip install --index=http://nexus.gazprom-neft.local:8080/repository/pypi-pypi-external-dso/simple \
+                --trusted-host nexus.gazprom-neft.local \
+                -r requirements.txt
+
 # run main.py
+WORKDIR ..
 USER 2001
 CMD ["python", "-u", "main.py"]
