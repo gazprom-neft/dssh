@@ -58,6 +58,26 @@ pipeline {
             }
         }
 
+        stage("Git submodule recursive clone") {
+            steps {
+                echo "=====clone submodules====="
+                sshagent(['d35cc8ea-04ce-4c30-97e3-e201ee123634']) {
+                    sh "git submodule update --init --recursive --remote"
+                    sh "git submodule update --recursive"
+                    
+                    // check and debug
+                    sh "git log -n 1"
+                    dir('src/seismiqb/'){
+                        sh "git log -n 1"
+                    }
+                    dir('src/seismiqb/seismiqb/batchflow/'){
+                        sh "git log -n 1"
+                    }
+                    
+                }
+            }
+        }
+
         stage("Docker nvidia registry login") {
             steps {
                 echo "=====docker login nvidia registry====="
