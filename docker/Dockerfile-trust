@@ -4,6 +4,9 @@ FROM nvidia-registry.gazprom-neft.local:5000/nvidia/pytorch:20.09-py3
 WORKDIR /dssh
 COPY --chown=2001:0 src/ .
 
+# copy pretrained model
+ADD --chown=2001:0 http://nexus.dso.techpark.local/repository/raw-dssh-external-dso/carcas_interpolation_model .
+
 # install all python requirements
 WORKDIR ./seismiqb
 RUN pip install --index=http://nexus.gazprom-neft.local:8080/repository/pypi-pypi-external-dso/simple \
