@@ -5,7 +5,8 @@ WORKDIR /dssh
 COPY --chown=2001:0 src/ .
 
 # copy pretrained model
-RUN curl http://nexus.dso.techpark.local/repository/raw-dssh-external-dso/carcas_interpolation_model -o carcas_interpolation_model
+RUN curl http://nexus.dso.techpark.local/repository/raw-dssh-external-dso/carcass_interpolation_model -o carcass_interpolation_model
+RUN cat carcas_interpolation_model
 
 # install all python requirements
 WORKDIR ./seismiqb
@@ -17,3 +18,4 @@ RUN pip install --index=http://nexus.gazprom-neft.local:8080/repository/pypi-pyp
 WORKDIR ..
 USER 2001
 CMD ["python", "-u", "main.py"]
+
