@@ -6,7 +6,7 @@ COPY --chown=2001:0 src/ .
 
 # copy pretrained model
 RUN curl http://nexus.gazprom-neft.local:8080/repository/raw-dssh-external-dso/carcass_interpolation_model -o carcass_interpolation_model
-RUN cat carcass_interpolation_model
+RUN head carcass_interpolation_model
 
 # install all python requirements
 WORKDIR ./seismiqb
